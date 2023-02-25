@@ -6,6 +6,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -24,5 +25,8 @@ public class Users {
     private String email;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    @OneToMany(fetch = FetchType.EAGER)
+    private List<Address> address;
 
 }
