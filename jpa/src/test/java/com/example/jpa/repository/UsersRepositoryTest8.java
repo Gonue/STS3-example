@@ -1,6 +1,7 @@
 package com.example.jpa.repository;
 
 import com.example.jpa.domain.Gender;
+import com.example.jpa.domain.UserHistory;
 import com.example.jpa.domain.Users;
 import org.apache.catalina.User;
 import org.assertj.core.util.Lists;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatchers.endsWith;
 
@@ -124,5 +126,25 @@ class UsersRepositoryTest8 {
         userRepository.save(users);
 
         userHistoryRepository.findAll().forEach(System.out::println);
+    }
+
+    @Test
+    void userRelationTest(){
+        Users users = new Users();
+        users.setName("david");
+        users.setEmail("david@gmail.com");
+        users.setGender(Gender.MALE);
+        userRepository.save(users);
+
+        users.setName("daniel");
+        userRepository.save(users);
+        users.setEmail("daniel@gmail.com");
+        userRepository.save(users);
+        List<UserHistory> result = userRepository.findByEmail("daniel@gamil.com").getUserHistories();
+        result.forEach(System.out::println);
+    }
+    @Test
+    void getUser(){
+        System.out.println(userHistoryRepository.findAll().get(0).getUsers());
     }
 }

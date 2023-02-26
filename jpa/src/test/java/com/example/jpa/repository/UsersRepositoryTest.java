@@ -1,5 +1,7 @@
 package com.example.jpa.repository;
 
+import com.example.jpa.domain.Gender;
+import com.example.jpa.domain.UserHistory;
 import com.example.jpa.domain.Users;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
@@ -14,13 +16,30 @@ import java.util.List;
 class UsersRepositoryTest {
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private UserHistoryRepository userHistoryRepository;
 
     @Test
-    void crud() {
-        Users users1 = new Users("jack","jack@gamil.com");
-        Users users2 = new Users("steve", "steve@gmail.com");
-        userRepository.saveAll(Lists.newArrayList(users1,users2));
-        List<Users> usersList = userRepository.findAll();
-        usersList.forEach(System.out::println);
+    void userRelationTest() {
+        Users users = new Users();
+        users.setName("david");
+        users.setEmail("david@gmail.com");
+        users.setGender(Gender.MALE);
+        userRepository.save(users);
+
+        users.setName("daniel");
+        userRepository.save(users);
+
+        users.setEmail("daniel@gmail.com");
+        userRepository.save(users);
+
+//        userHistoryRepository.findAll().forEach(System.out::println);
+
+//        List<UserHistory> result = userHistoryRepository.findByUserId(
+//            userRepository.findByEmail("daniel@fastcampus.com").getId());
+
+        List<UserHistory> result = userRepository.findByEmail("daniel@fastcampus.com").getUserHistories();
+
+        result.forEach(System.out::println);
     }
 }

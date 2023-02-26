@@ -11,6 +11,8 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -21,40 +23,23 @@ import java.time.LocalDateTime;
 @Builder
 @Entity
 @EntityListeners(value = {UserEntityListener.class})
-@Table(name = "users", indexes = {@Index(columnList = "name")}, uniqueConstraints = {@UniqueConstraint(columnNames = {"email"})})
-public class Users extends BaseEntity implements Auditable{
+public class Users extends BaseEntity{
 
-    @Id //pk
-    @GeneratedValue
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @NonNull
     private String name;
+
     @NonNull
     private String email;
 
     @Enumerated(value = EnumType.STRING)
     private Gender gender;
 
-//    @Column(updatable = false)
-//    @CreatedDate
-//    private LocalDateTime createdAt;
-//    @LastModifiedDate
-//    private LocalDateTime updatedAt;
-
-//    @Transient
-//    private String testData;
-
-//    @OneToMany(fetch = FetchType.EAGER)
-//    private List<Address> address;
-//    @PrePersist
-//    public void prePersist(){
-//        this.createdAt = LocalDateTime.now();
-//        this.updatedAt = LocalDateTime.now();
-//    }
-//
-//    @PreUpdate
-//    public void preUpdate(){
-//        this.updatedAt = LocalDateTime.now();
-//    }
-
+    @OneToMany(fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    @ToString.Exclude
+    private List<UserHistory> userHistories = new ArrayList<>();
 }

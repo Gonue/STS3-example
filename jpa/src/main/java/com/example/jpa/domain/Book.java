@@ -13,30 +13,21 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-//@EntityListeners(value = AuditingEntityListener.class)
 @NoArgsConstructor
 @Data
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-public class Book extends BaseEntity implements Auditable {
+public class Book extends BaseEntity {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String name;
-    private String author;
-//    @CreatedDate
-//    private LocalDateTime createdAt;
-//    @LastModifiedDate
-//    private LocalDateTime updatedAt;
+    private String category;
+    private Long authorId;
+    private Long publisherId;
 
-//    @PrePersist
-//    public void prePersist(){
-//        this.createAt = LocalDateTime.now();
-//        this.updateAt = LocalDateTime.now();
-//    }
-//    @PreUpdate
-//    public void preUpdate(){
-//        this.updateAt = LocalDateTime.now();
-//    }
+    @OneToOne(mappedBy = "book")
+    @ToString.Exclude
+    private BookReviewInfo bookReviewInfo;
+
 }
