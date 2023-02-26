@@ -3,13 +3,17 @@ package com.example.jpa.repository;
 
 import com.example.jpa.domain.Users;
 import org.apache.catalina.User;
+import org.apache.catalina.Valve;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public interface UserRepository extends JpaRepository<Users, Long> {
     List<Users> findByName(String name);
@@ -41,7 +45,7 @@ public interface UserRepository extends JpaRepository<Users, Long> {
 
     List<Users> findByIdIsNotNull();
 
-    List<Users> findByAddressIsNotEmpty(); // name is not null and name != '' x
+//    List<Users> findByAddressIsNotEmpty(); // name is not null and name != '' x
 
     List<Users> findByNameIn(List<String> names);
 
@@ -57,5 +61,8 @@ public interface UserRepository extends JpaRepository<Users, Long> {
     List<Users> findFirstByName(String name, Sort sort);
 
     Page<Users> findByName(String name, Pageable pageable);
+
+    @Query(value = "select * from users limit 1;", nativeQuery = true)
+    Map<String, Object> findRawRecord();
 
 }

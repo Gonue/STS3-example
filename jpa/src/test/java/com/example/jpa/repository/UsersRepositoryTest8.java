@@ -1,6 +1,8 @@
 package com.example.jpa.repository;
 
+import com.example.jpa.domain.Gender;
 import com.example.jpa.domain.Users;
+import org.apache.catalina.User;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +20,8 @@ import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatc
 class UsersRepositoryTest8 {
     @Autowired
     private UserRepository userRepository;
-
+    @Autowired
+    private UserHistoryRepository userHistoryRepository;
     @Test
     void crud() {
         userRepository.save(new Users("jk","jk@gmail.com"));
@@ -66,5 +69,60 @@ class UsersRepositoryTest8 {
         System.out.println("findFirstByNameOrderByIdDescEmailAsc : " + userRepository.findFirstByNameOrderByIdDescEmailAsc("kk"));
         System.out.println("findFirstByNameWithSortParams : " + userRepository.findFirstByName("kk", Sort.by(Sort.Order.desc("id"), Sort.Order.asc("email"))));
         System.out.println("findByNameWithPaging : " + userRepository.findByName("kk", PageRequest.of(1,1,Sort.by(Sort.Order.desc("id")))).getContent());
+    }
+
+    @Test
+    void insertAndUpdateTest(){
+        Users users = new Users();
+        users.setName("kk");
+        users.setEmail("kk@gmail.com");
+        userRepository.save(users);
+
+        Users users2 = userRepository.findById(1L).orElseThrow(RuntimeException::new);
+        users2.setName("kkk");
+        userRepository.save(users2);
+    }
+
+    @Test
+    void enumTest(){
+        Users users = userRepository.findById(1L).orElseThrow(RuntimeException::new);
+        users.setGender(Gender.MALE);
+
+        userRepository.save(users);
+        userRepository.findAll().forEach(System.out::println);
+
+        System.out.println(userRepository.findRawRecord().get("gender"));
+    }
+
+    @Test
+    void prePersistTest(){
+        Users users = new Users();
+        users.setName("kk");
+        users.setEmail("kk2@gmail.com");
+        userRepository.save(users);
+        System.out.println(userRepository.findByEmail("kk@gmail.com"));
+    }
+
+    @Test
+    void preUpdateTest(){
+        Users users = userRepository.findById(1L).orElseThrow(RuntimeException::new);
+        System.out.println("as-is : " + users);
+
+        users.setName("kk22");
+        userRepository.save(users);
+        System.out.println("to-be : "+ userRepository.findAll().get(0));
+    }
+
+    @Test
+    void userHistoryTest(){
+        Users users = new Users();
+        users.setEmail("kk-new@gmail.com");
+        users.setName("kk-new");
+
+        userRepository.save(users);
+        users.setName("kk-new-new");
+        userRepository.save(users);
+
+        userHistoryRepository.findAll().forEach(System.out::println);
     }
 }
