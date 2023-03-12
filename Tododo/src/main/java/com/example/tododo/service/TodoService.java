@@ -24,7 +24,7 @@ public class TodoService {
         return todoRepository.save(todoEntity);
     }
 
-    public TodoEntity searchById(Long id){
+    public TodoEntity findById(Long id){
         return todoRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NO_CONTENT));
     }
 
@@ -33,10 +33,16 @@ public class TodoService {
     }
 
     public TodoEntity updateById(Long id, TodoDto todoDto){
-        TodoEntity todoEntity = searchById(id);
-        todoEntity.setTitle(todoDto.getTitle());
-        todoEntity.setOrder(todoDto.getOrder());
-        todoEntity.setCompleted(todoDto.getCompleted());
+        TodoEntity todoEntity = findById(id);
+        if(todoDto.getTitle() != null){
+            todoEntity.setTitle(todoDto.getTitle());
+        }
+        if(todoDto.getOrder() != null){
+            todoEntity.setOrder(todoDto.getOrder());
+        }
+        if(todoDto.getCompleted() != null){
+            todoEntity.setCompleted(todoDto.getCompleted());
+        }
         return todoRepository.save(todoEntity);
     }
 
@@ -46,4 +52,5 @@ public class TodoService {
     public void deleteAll(){
         todoRepository.deleteAll();
     }
+
 }
