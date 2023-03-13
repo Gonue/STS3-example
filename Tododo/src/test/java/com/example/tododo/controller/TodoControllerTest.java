@@ -31,16 +31,22 @@ import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.restdocs.payload.PayloadDocumentation;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 import static org.springframework.restdocs.headers.HeaderDocumentation.*;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.*;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.patch;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
+import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
+import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -103,10 +109,10 @@ class TodoControllerTest {
                         requestFields(
                                 List.of(
                                         fieldWithPath("id").type(JsonFieldType.NUMBER).description("식별자"),
-                                        fieldWithPath("title").type(JsonFieldType.STRING).description("해야 할 일"),
+                                        fieldWithPath("title").type(JsonFieldType.STRING).description("해야 할 일").optional(),
                                         fieldWithPath("order").type(JsonFieldType.NUMBER).description("순서"),
                                         fieldWithPath("completed").type(JsonFieldType.BOOLEAN).description("처리 유무"),
-                                        fieldWithPath("url").type(JsonFieldType.NULL).description("처리 유무")
+                                        fieldWithPath("url").type(JsonFieldType.NULL).description("주소")
                                 )
                         )
                 ));
@@ -115,43 +121,80 @@ class TodoControllerTest {
     @Test
     @DisplayName("단일 검색")
     void findById() throws Exception{
+        long id = 1L;
         given(todoService.findById(1L)).willReturn(expected);
 
         mockMvc.perform(
-                get("/todo/1"))
+                get("/todo/{id}",id))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.id").value(expected.getId()))
                 .andExpect(jsonPath("$.title").value(expected.getTitle()))
                 .andExpect(jsonPath("$.order").value(expected.getOrder()))
-                .andExpect(jsonPath("$.completed").value(expected.getCompleted()));
+                .andExpect(jsonPath("$.completed").value(expected.getCompleted()))
+
+                .andDo(document(
+                        "get-todo",
+                        getResponsePreProcessor(),
+                        pathParameters(
+                                parameterWithName("id").description("식별자")
+                        ),
+                        responseFields(
+                                List.of(
+                                        fieldWithPath("id").type(JsonFieldType.NUMBER).description("식별자"),
+                                        fieldWithPath("title").type(JsonFieldType.STRING).description("해야 할 일"),
+                                        fieldWithPath("order").type(JsonFieldType.NUMBER).description("순서"),
+                                        fieldWithPath("completed").type(JsonFieldType.BOOLEAN).description("처리 유무"),
+                                        fieldWithPath("url").type(JsonFieldType.STRING).description("주소")
+                                )
+                        )));
     }
 
     @Test
     @DisplayName("전체 검색")
     void findAll()throws Exception{
+
         List<TodoEntity> mockList = new ArrayList<>();
         int expectedLength = 5;
         for (int i = 0; i < expectedLength; i++){
             mockList.add(mock(TodoEntity.class));
         }
-
         given(todoService.findAll()).willReturn(mockList);
 
-        mockMvc.perform(
-                get("/todo"))
+        ResultActions actions =
+                mockMvc.perform(
+                MockMvcRequestBuilders.get("/todo")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        );
+
+        actions
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(expectedLength));
+                .andExpect(jsonPath("$.length()").value(expectedLength))
+                .andDo(document(
+                        "get-todos",
+                        getResponsePreProcessor(),
+                        responseFields(
+                                List.of(
+                                        fieldWithPath("[].id").type(JsonFieldType.NUMBER).description("식별자"),
+                                        fieldWithPath("[].title").type(JsonFieldType.NULL).description("해야 할 일"),
+                                        fieldWithPath("[].order").type(JsonFieldType.NUMBER).description("순서"),
+                                        fieldWithPath("[].completed").type(JsonFieldType.BOOLEAN).description("처리 유무"),
+                                        fieldWithPath("[].url").type(JsonFieldType.STRING).description("주소")
+                                )
+                        )));
     }
 
 
     @Test
     @DisplayName("수정")
     void patchTodo() throws Exception{
-
+        long id = 1L;
         TodoEntity response = new TodoEntity();
         response.setId(1L);
         response.setTitle("호이");
+        response.setOrder(1L);
+        response.setCompleted(true);
 
         given(todoService.updateById(any(Long.class),any(TodoDto.class))).willReturn(response);
 
@@ -159,7 +202,7 @@ class TodoControllerTest {
         String content = mapper.writeValueAsString(expected);
 
         ResultActions actions = mockMvc.perform(
-                patch("/todo/1")
+                patch("/todo/{id}", id)
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(content));
@@ -167,7 +210,33 @@ class TodoControllerTest {
         actions
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(expected.getId()))
-                .andExpect(jsonPath("$.title").value(response.getTitle()));
+                .andExpect(jsonPath("$.title").value(response.getTitle()))
+                .andExpect(jsonPath("$.order").value(response.getOrder()))
+                .andExpect(jsonPath("$.completed").value(response.getCompleted()))
+                .andDo(document(
+                        "patch-todo",
+                        getRequestPreProcessor(),
+                        getResponsePreProcessor(),
+                        pathParameters(
+                                parameterWithName("id").description("식별자")
+                        ),
+                        requestFields(
+                                List.of(
+                                        fieldWithPath("id").type(JsonFieldType.NUMBER).description("식별자").optional(),
+                                        fieldWithPath("title").type(JsonFieldType.STRING).description("해야 할 일").optional(),
+                                        fieldWithPath("order").type(JsonFieldType.NUMBER).description("순서"),
+                                        fieldWithPath("completed").type(JsonFieldType.BOOLEAN).description("처리 유무")
+                                )
+                        ),
+                        responseFields(
+                                List.of(
+                                        fieldWithPath("id").type(JsonFieldType.NUMBER).description("식별자"),
+                                        fieldWithPath("title").type(JsonFieldType.STRING).description("해야 할 일"),
+                                        fieldWithPath("order").type(JsonFieldType.NUMBER).description("순서"),
+                                        fieldWithPath("completed").type(JsonFieldType.BOOLEAN).description("처리 유무"),
+                                        fieldWithPath("url").type(JsonFieldType.STRING).description("주소")
+                                )
+                        )));
     }
 
 
@@ -177,8 +246,16 @@ class TodoControllerTest {
     @DisplayName("단건 삭제")
     void deleteById() throws Exception{
         mockMvc.perform(
-                delete("/todo/1"))
-                .andExpect(status().isOk());
+                RestDocumentationRequestBuilders.delete("/todo/{id}",1L))
+                .andExpect(status().isOk())
+                .andDo(document(
+                        "delete-todo",
+                        getRequestPreProcessor(),
+                        getResponsePreProcessor(),
+                        pathParameters(
+                                parameterWithName("id").description("식별자")
+                        )
+                ));
     }
 
 
@@ -186,7 +263,10 @@ class TodoControllerTest {
     @DisplayName("전체 삭제")
     void deleteAll() throws Exception{
         mockMvc.perform(
-                delete("/todo"))
-                .andExpect(status().isOk());
+                RestDocumentationRequestBuilders.delete("/todo"))
+                .andExpect(status().isOk())
+                .andDo(document(
+                        "delete-all-todo"
+                ));
     }
 }
